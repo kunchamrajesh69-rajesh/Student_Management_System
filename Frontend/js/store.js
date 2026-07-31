@@ -6,9 +6,10 @@ const Store = (function () {
 
     'use strict';
 
-    // Auto-detect hostname for local development or docker container environment
-    const HOST = window.location.hostname || 'localhost';
-    const API_BASE = `http://${HOST}:8080/api/students`;
+    function getApiBase() {
+        const baseUrl = typeof window.getBackendBaseUrl === 'function' ? window.getBackendBaseUrl() : 'http://localhost:8080';
+        return `${baseUrl}/api/students`;
+    }
 
     function formatYearString(year) {
         if (typeof year === 'number' || (typeof year === 'string' && !isNaN(year) && year.trim() !== '')) {
@@ -65,7 +66,7 @@ const Store = (function () {
     return {
 
         getApiBaseUrl: function () {
-            return API_BASE;
+            return getApiBase();
         },
 
         getAllStudents: async function (search = '', course = '', status = '') {
@@ -76,7 +77,7 @@ const Store = (function () {
                 if (status) params.append('status', status);
 
                 const queryString = params.toString() ? `?${params.toString()}` : '';
-                const res = await fetch(`${API_BASE}${queryString}`);
+                const res = await fetch(`${getApiBase()}${queryString}`);
                 
                 if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
                 const list = await res.json();
@@ -89,7 +90,7 @@ const Store = (function () {
 
         getRecentStudents: async function () {
             try {
-                const res = await fetch(`${API_BASE}/recent`);
+                const res = await fetch(`${getApiBase()}/recent`);
                 if (!res.ok) return await this.getAllStudents();
                 const list = await res.json();
                 return list.map(normalizeStudent);
@@ -102,7 +103,7 @@ const Store = (function () {
 
         getStudentById: async function (id) {
             try {
-                const res = await fetch(`${API_BASE}/${id}`);
+                const res = await fetch(`${getApiBase()}/${id}`);
                 if (!res.ok) return null;
                 const student = await res.json();
                 return normalizeStudent(student);
@@ -114,7 +115,7 @@ const Store = (function () {
 
         addStudent: async function (student) {
             const payload = prepareForBackend(student);
-            const res = await fetch(API_BASE, {
+            const res = await fetch(getApiBase(), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -130,7 +131,7 @@ const Store = (function () {
         updateStudent: async function (id, updated) {
             const payload = prepareForBackend(updated);
             payload.id = Number(id);
-            const res = await fetch(`${API_BASE}/${id}`, {
+            const res = await fetch(`${getApiBase()}/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -145,7 +146,7 @@ const Store = (function () {
 
         deleteStudent: async function (id) {
             try {
-                const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+                const res = await fetch(`${getApiBase()}/${id}`, { method: 'DELETE' });
                 return res.ok;
             } catch (err) {
                 console.error(`API Error in deleteStudent(${id}):`, err);
@@ -167,7 +168,7 @@ const Store = (function () {
 
         getStats: async function () {
             try {
-                const res = await fetch(`${API_BASE}/stats`);
+                const res = await fetch(`${getApiBase()}/stats`);
                 if (res.ok) {
                     return await res.json();
                 }
@@ -185,7 +186,7 @@ const Store = (function () {
 
         getDistinctCourses: async function () {
             try {
-                const res = await fetch(`${API_BASE}/courses`);
+                const res = await fetch(`${getApiBase()}/courses`);
                 if (res.ok) {
                     return await res.json();
                 }
