@@ -7,8 +7,8 @@
 const SESSION_KEY = 'sms_session';
 
 function getAuthEndpoint() {
-    const HOST = window.location.hostname || 'localhost';
-    return `http://${HOST}:8080/api/auth/login`;
+    const baseUrl = typeof window.getBackendBaseUrl === 'function' ? window.getBackendBaseUrl() : 'http://localhost:8080';
+    return `${baseUrl}/api/auth/login`;
 }
 
 /* ---------- SESSION HELPERS ---------------------------------- */
@@ -99,6 +99,23 @@ function paintSessionInfo() {
 
 function initLoginForm() {
     const form = document.getElementById('loginForm');
+    const backendUrlInput = document.getElementById('backendUrlInput');
+    const saveBackendUrlBtn = document.getElementById('saveBackendUrlBtn');
+
+    if (backendUrlInput && typeof window.getBackendBaseUrl === 'function') {
+        backendUrlInput.value = window.getBackendBaseUrl();
+    }
+
+    if (saveBackendUrlBtn && backendUrlInput) {
+        saveBackendUrlBtn.addEventListener('click', function () {
+            const newUrl = backendUrlInput.value.trim();
+            if (typeof window.setBackendBaseUrl === 'function') {
+                window.setBackendBaseUrl(newUrl);
+                alert('Backend API URL saved! Try logging in now.');
+            }
+        });
+    }
+
     if (!form) return;
 
     form.addEventListener('submit', async function (event) {
@@ -119,8 +136,10 @@ function initLoginForm() {
             return;
         }
 
+        const endpoint = getAuthEndpoint();
+
         try {
-            const response = await fetch(getAuthEndpoint(), {
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
@@ -137,7 +156,7 @@ function initLoginForm() {
             }
         } catch (err) {
             console.error('Login connection error:', err);
-            errorBox.textContent = 'Cannot reach backend server. Please verify Spring Boot API is running.';
+            errorBox.innerHTML = `Cannot reach backend API at <code>${escapeHtml(endpoint)}</code>. <br><small>If backend is deployed on Render, paste your Render URL in the input below and click Save.</small>`;
             errorBox.classList.remove('d-none');
         }
     });
