@@ -1,0 +1,15 @@
+{
+  "name": "student-management-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Student Management System - Full Stack Application",
+  "workspaces": [
+    "Frontend"
+  ],
+  "scripts": {
+    "dev": "npm --prefix Frontend run dev",
+    "start": "npm --prefix Frontend run start",
+    "build": "npm --prefix Frontend run build",
+    "preview": "npm --prefix Frontend run preview"
+  }
+}

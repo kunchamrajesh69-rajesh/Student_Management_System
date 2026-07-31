@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # MySQL Database Container
+  mysql-db:
+    image: mysql:8.0
+    container_name: sms-mysql-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: student_management
+      MYSQL_USER: smsuser
+      MYSQL_PASSWORD: smspassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sms-network
+
+  # Spring Boot Backend API Container
+  backend-api:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: sms-backend-api
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/student_management?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: smsuser
+      SPRING_DATASOURCE_PASSWORD: smspassword
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_SQL_INIT_MODE: always
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: admin123
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+    networks:
+      - sms-network
+
+networks:
+  sms-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
